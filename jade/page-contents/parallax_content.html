@@ -20,8 +20,10 @@
       <div id="initialization" class="scrollspy section">
         <h3 class="header">Initialization</h3>
         <pre><code class="language-javascript">
-  var elem = document.querySelector('.parallax');
-  var instance = M.Parallax.init(elem, options);
+  document.addEventListener('DOMContentLoaded', function(ev) {
+    var els = document.querySelectorAll('.parallax');
+    M.Parallax.init(els, options);
+  });
 
   // Or with jQuery
 

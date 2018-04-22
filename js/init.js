@@ -18,6 +18,55 @@
       return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
     }
 
+    async function fetchSuggestions(val) {
+      "use strict";
+      // PoC for working callback, without being intrusive of the functionality.
+      console.log('value = ' + val);
+      // Sample using komoot for address autocompletion
+      this.autoCompleteUrl = 'http://photon.komoot.de/api/';
+      var qs = '?q=' + encodeURIComponent(val), req, instance;
+      if (typeof(this.req) == 'undefined') {
+        this.req = new XMLHttpRequest();
+      }
+      else if (this.req.readyState < XMLHttpRequest.DONE)
+      {
+        this.req.abort();
+      }
+      req = this.req;
+      instance = this;
+      this.req.onreadystatechange = function() {
+        "use strict";
+        if (req.readyState === XMLHttpRequest.DONE && req.status == 200) {
+          var data = {};
+          if (req.response.length > 0) {
+            var r = JSON.parse(req.response);
+            // console.log(r);
+            r.features.forEach(function(cur, idx, all) {
+              var results = '';
+              if (cur.properties.hasOwnProperty('street') || cur.properties['osm_key'] == 'highway') {
+                results += cur.properties['street'] ? cur.properties['street'] : cur.properties['name'];
+                if (cur.properties.hasOwnProperty('housenumber')) {
+                  results += ' ' + cur.properties['housenumber'];
+                }
+                results += ', ';
+              }
+              if (cur.properties.hasOwnProperty('city')) {
+                results += cur.properties['city'] + ', ';
+              }
+              if (cur.properties.hasOwnProperty('country')) {
+                results += cur.properties['country'];
+              }
+              data[results] = null;
+            });
+          }
+          instance.updateData(data);
+          // console.log(instance.options.data);
+        }
+      };
+      req.open('GET', this.autoCompleteUrl + qs, true);
+      req.send();
+    }
+
     $('.dynamic-color .col').each(function () {
       $(this).children().each(function () {
         var color = $(this).css('background-color'),
@@ -193,10 +242,7 @@
     $('.tap-target').tapTarget();
     $('input.autocomplete').autocomplete({
       data: {"Apple": null, "Microsoft": null, "Google": 'http://placehold.it/250x250'},
-      onValueChange: function (val) {
-        // PoC for working callback, without being intrusive of the functionality.
-        console.log('value = ' + val);
-      }
+      onValueChange: fetchSuggestions
     });
     $('input[data-length], textarea[data-length]').characterCounter();
 
